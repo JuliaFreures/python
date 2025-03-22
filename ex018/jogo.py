@@ -14,8 +14,8 @@ def solicitar_escolhas(num_jogadores):
     for i in range(1, num_jogadores + 1):
         escolha = getpass.getpass(f"Jogador{i} - escolha 'pedra', 'papel' ou 'tesoura':")
         escolhas.append(pre_processar_resposta(escolha))
-        if len(escolhas) > 2:
-              escolhas.append(random.choice)
+        if num_jogadores == 1:
+              escolhas.append(random.choice(ESCOLHAS_VALIDAS))
     return escolhas
 
 def jokenpo(jogador1, jogador2):
@@ -31,7 +31,7 @@ def jokenpo(jogador1, jogador2):
 num_jogadores = int(input("Quantos jogadores (1 ou 2):"))
 
 escolhas = solicitar_escolhas(num_jogadores)
-resultado = jokenpo(escolhas[0], escolhas[1])
+resultado = jokenpo(escolhas[0], escolhas[1]  if num_jogadores == 2 else escolhas[1])
 print("\n---------")
 for i, escolha in  enumerate (escolhas):
       print(f"Jogador {i+1}: {escolha}")
