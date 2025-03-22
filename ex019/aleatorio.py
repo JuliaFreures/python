@@ -12,16 +12,16 @@ while True:
     except ValueError:
         print("Por favor, insira um número válido.")
 
-# Loop até o chute ser igual ao número gerado
+
 while chute != numero:
-    print(f" chute = {chute}")  # Depuração
+    print(f" chute = {chute}")  
     
     if chute > numero:
         print("Seu chute é maior que o valor.")
     elif chute < numero:
         print("Seu chute é menor que o valor.")
     
-    # Solicitar novo chute
+    
     while True:
         try:
             chute = int(input("Adivinhe o valor: "))
