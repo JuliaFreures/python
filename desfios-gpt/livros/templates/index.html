@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biblioteca</title>
+
+    <link rel="stylesheet" href="../static/css/style.css">
+    <link rel="shortcut icon" href="../static/css/imagens/favicon.ico">
+</head>
+<body>
+    <header>
+        <h1>Minha estante particular</h1>
+        <p>Bem-vindos a minha estante!</p>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="meuslivros.html">Meus Livros</a>
+            <a href="querocomprar.html">Quero comprar</a>
+            <a href="favoritos.html">Favoritos</a>
+        </nav>
+    </header>
+    <main>
+        <h1>Minha biblioteca particular</h1>
+        <p>Esse site vai ser minha estante particular, onde vou conseguir adicionar livros, colocar minhas opiniões, favoritar entre outras coisas.</p>
+
+        <h2>Buscar livro</h2>
+        <form action="/buscar" method="get">
+            <input type="text" name="q" placeholder="Digite o título do livro" required>
+            <button type="submit">Buscar</button>
+        </form>
+
+        <h2>Resultados:</h2>
+        {% if livros %}
+            <div class="livros">
+                {% for livro in livros %}
+                    <div class="livro">
+                        {% if livro.capa %}
+                            <img src="{{ livro.capa }}" alt="Capa do livro: {{ livro.titulo }}">
+                        {% else %}
+                            <p>Sem capa disponível</p>
+                        {% endif %}
+                        <p><strong>{{ livro.titulo }}</strong></p>
+                        <p>Autor(es): {{ livro.autor }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>Nenhum livro encontrado. Tente buscar por outro título ou adicionar novos livros à sua estante.</p>
+        {% endif %}
+    </main>
+</body>
+</html>
