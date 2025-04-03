@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batalha Pokémon</title>
+    
+    <!-- Link para a versão estável do PyScript -->
+    <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
+    <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            text-align: center;
+            padding: 20px;
+        }
+
+        #player1, #player2 {
+            display: inline-block;
+            width: 40%;
+            padding: 20px;
+            margin: 10px;
+            border-radius: 10px;
+            background-color: #ffffff;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        img {
+            max-width: 100px;
+            max-height: 100px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #battle-log {
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        #player1-effect, #player2-effect {
+            font-size: 32px;
+            display: none;
+            position: absolute;
+            top: 20%;
+            width: 100%;
+            text-align: center;
+            z-index: 2;
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Batalha Pokémon</h1>
+
+    <div id="player1">
+        <h2 id="player1-name">Pokémon 1</h2>
+        <img id="player1-img" src="" alt="Pokémon 1">
+        <p>HP: <span id="player1-hp"></span></p>
+        <p>Ataque: <span id="player1-attack"></span></p>
+        <button onclick="attack(1)">Atacar</button>
+        <div id="player1-effect"></div>
+    </div>
+
+    <div id="player2">
+        <h2 id="player2-name">Pokémon 2</h2>
+        <img id="player2-img" src="" alt="Pokémon 2">
+        <p>HP: <span id="player2-hp"></span></p>
+        <p>Ataque: <span id="player2-attack"></span></p>
+        <button onclick="attack(2)">Atacar</button>
+        <div id="player2-effect"></div>
+    </div>
+
+    <p id="battle-log"></p>
+
+    <button onclick="startBattle()">Iniciar Batalha</button>
+
+    <!-- PyScript para o código Python -->
+    <py-script>
+        import js
+        import random
+        import pypokedex
+        import pyodide_http
+        import urllib.request
+        import json
+        pyodide_http.patch_all()
+
+        teams = {"player1": [], "player2": []}
+        type_chart = {
+            "fire": ["grass", "ice", "bug", "steel"],
+            "water": ["fire", "ground", "rock"],
+            "grass": ["water", "ground", "rock"],
+            "electric": ["water", "flying"],
+        }
+
+        def update_pokemon(slot, player, data):
+            """Atualiza o time e interface do Pokémon"""
+            move = data["moves"][0]["move"]["name"].capitalize()  # Usa o primeiro golpe disponível
+            pokemon_type = data["types"][0]["type"]["name"]  # Tipo principal do Pokémon
+            pokemon_info = {
+                "name": data["name"].capitalize(),
+                "hp": data["stats"][0]["base_stat"],
+                "attack": data["stats"][1]["base_stat"],
+                "img": data["sprites"]["front_default"],
+                "move": move,
+                "type": pokemon_type
+            }
+            teams[player].append(pokemon_info)
+            if slot == 0:  # Se for o primeiro, ele é o ativo
+                js.document.getElementById(f"{player}-name").innerText = pokemon_info["name"]
+                js.document.getElementById(f"{player}-img").src = pokemon_info["img"]
+                js.document.getElementById(f"{player}-hp").innerText = pokemon_info["hp"]
+                js.document.getElementById(f"{player}-attack").innerText = pokemon_info["move"]
+
+        def fetch_pokemon(player, slot):
+            """Busca um Pokémon aleatório e adiciona ao time"""
+            pokemon_id = random.randint(1, 151)
+            url = f"https://pokeapi.co/api/v2/pokemon/{pokemon_id}"
+            with urllib.request.urlopen(url) as response:
+                data = json.loads(response.read().decode())
+            update_pokemon(slot, player, data)
+
+        def startBattle():
+            """Inicia um novo duelo com times completos"""
+            teams["player1"] = []
+            teams["player2"] = []
+            for i in range(3):  # Cada jogador recebe 3 Pokémon (1 ativo + 2 reservas)
+                fetch_pokemon("player1", i)
+                fetch_pokemon("player2", i)
+            js.document.getElementById("battle-log").innerText = "A batalha começou!"
+
+        def attack(attacker):
+            """Executa um ataque e gerencia substituição de Pokémon"""
+            defender = "player1" if attacker == 2 else "player2"
+            if len(teams[defender]) == 0:
+                js.document.getElementById("battle-log").innerText = f"{defender.upper()} perdeu a batalha!"
+                return
+            attacker_pokemon = teams[f"player{attacker}"][0]
+            defender_pokemon = teams[defender][0]
+            attack_type = attacker_pokemon["type"]
+            defender_type = defender_pokemon["type"]
+            multiplier = 2 if defender_type in type_chart.get(attack_type, []) else 1
+            damage = (attacker_pokemon["attack"] // 3) * multiplier
+            defender_pokemon["hp"] -= damage
+            if defender_pokemon["hp"] < 0:
+                defender_pokemon["hp"] = 0
+            js.document.getElementById(f"{defender}-hp").innerText = defender_pokemon["hp"]
+            js.document.getElementById("battle-log").innerText += f"\n{attacker_pokemon['name']} usou {attacker_pokemon['move']}! Dano: {damage}"
+
+            # Efeito visual de ataque
+            attack_effect = js.document.getElementById(f"player{attacker}-effect")
+            attack_effect.style.display = "block"
+            attack_effect.innerText = "💥" if multiplier == 1 else "🔥"
+            js.document.getElementById(f"player{attacker}-img").style.transform = "scale(1.1)"
+            js.setTimeout(lambda: attack_effect.style.display = "none", 500)
+            js.setTimeout(lambda: js.document.getElementById(f"player{attacker}-img").style.transform = "scale(1)", 500)
+
+            if defender_pokemon["hp"] == 0:
+                teams[defender].pop(0)  # Remove Pokémon derrotado
+            if len(teams[defender]) == 0:
+                js.document.getElementById("battle-log").innerText += f"\n{defender.upper()} perdeu a batalha!"
+    </py-script>
+
+</body>
+</html>
